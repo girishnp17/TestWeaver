@@ -1,0 +1,227 @@
+# config/tasks.yaml
+
+analyze_code_task:
+  description: >
+    Analyze the following code structure and functionality: {code_sample}
+    Understand:
+    1. Code architecture and design patterns used
+    2. Functions, classes, methods, and their dependencies
+    3. Input/output parameters and data types
+    4. Business logic and edge cases
+    5. Potential areas that require testing coverage
+
+    Focus on identifying all testable components and their relationships.
+  expected_output: >
+    A comprehensive code analysis report containing:
+    - Code structure overview with key components
+    - List of functions/methods with their signatures
+    - Identified dependencies and relationships
+    - Potential edge cases and error scenarios
+    - Testing requirements and recommendations
+  agent: code_analyzer
+
+design_test_strategy_task:
+  description: >
+    Based on the code analysis, design a comprehensive test strategy that covers:
+    1. Unit tests for individual functions and methods
+    2. Integration tests for component interactions
+    3. Edge case scenarios and error handling
+    4. Mock requirements for external dependencies
+    5. Test data requirements and setup needs
+
+    Ensure the strategy covers all critical paths and scenarios.
+  expected_output: >
+    A detailed test strategy document including:
+    - Test categories and types needed
+    - Priority levels for different test scenarios
+    - Mock and fixture requirements
+    - Test data specifications
+    - Coverage goals and success criteria
+  agent: test_strategist
+  context:
+    - analyze_code_task
+
+generate_test_code_task:
+  description: >
+    Generate and SAVE high-quality, executable test code based on the analysis and strategy:
+    1. Write comprehensive unit tests for all functions/methods
+    2. Create integration tests for component interactions
+    3. Implement edge case and error handling tests
+    4. Set up necessary mocks and fixtures
+    5. Follow testing best practices and conventions
+
+    CRITICAL: Use FileWriterTool to save EACH test file separately:
+    - For each component/module/class being tested, create a separate test file
+    - Use naming convention: ./tests/test_<component>.py
+    - Save using FileWriterTool with the complete file path
+    - Include all necessary imports and dependencies in each file
+
+    For each component:
+    1. Generate complete, executable Python test code (unittest or pytest)
+    2. Use FileWriterTool to save the file
+    3. Ensure the code is complete and can run independently
+
+    Example files to create:
+    - ./tests/test_fibonacci.py (for calculate_fibonacci function)
+    - ./tests/test_prime.py (for is_prime function)
+    - ./tests/test_calculator.py (for Calculator class)
+
+    Ensure tests are maintainable, readable, and provide good coverage.
+  expected_output: >
+    Confirmation that ALL test files have been saved using FileWriterTool:
+
+    For each component tested, you should report:
+    - File path where the test was saved (e.g., "./tests/test_calculator.py")
+    - Brief summary of test coverage for that file
+    - Number of test cases in the file
+
+    Example output format:
+    "Successfully saved test files:
+    1. ./tests/test_fibonacci.py - 5 test cases covering edge cases and normal operation
+    2. ./tests/test_prime.py - 4 test cases for prime number validation
+    3. ./tests/test_calculator.py - 8 test cases for all Calculator methods"
+  agent: test_generator
+  context:
+    - analyze_code_task
+    - design_test_strategy_task
+
+execute_tests_task:
+  description: >
+    Execute ALL generated test files from ./tests/ directory using CodeInterpreterTool in safe mode.
+
+    STEP-BY-STEP PROCESS:
+    1. Use DirectoryReadTool to list all files in ./tests/ directory
+    2. Use FileReadTool to read each test file
+    3. For EACH test file, create a complete Python script that includes:
+       a. The original code being tested (from code_sample input)
+       b. The test code from the test file
+       c. Code to run the tests and capture results
+
+    4. Use CodeInterpreterTool to execute each complete script in safe mode (Docker)
+    5. Capture and report:
+       - Total tests run
+       - Tests passed
+       - Tests failed (with error messages)
+       - Tests with errors (with stack traces)
+       - Execution time
+
+    EXAMPLE of how to structure the code for execution:
+    ```python
+    # Original code being tested
+    def calculate_fibonacci(n):
+        # ... original implementation ...
+
+    # Test code from test file
+    import unittest
+
+    class TestFibonacci(unittest.TestCase):
+        # ... test methods ...
+
+    # Run tests
+    if __name__ == '__main__':
+        unittest.main(verbosity=2)
+    ```
+
+    Execute each test file separately and provide detailed results for each.
+  expected_output: >
+    A comprehensive test execution report containing:
+
+    For EACH test file executed:
+    - File name (e.g., "test_fibonacci.py")
+    - Execution status (Success/Failed/Error)
+    - Total number of tests in the file
+    - Number of tests passed
+    - Number of tests failed with detailed error messages
+    - Number of tests with errors and stack traces
+    - Execution time
+
+    Summary section:
+    - Total test files executed
+    - Overall pass/fail rate
+    - Total tests across all files
+    - Any critical issues or patterns observed
+
+    Example format:
+    "Test Execution Results:
+
+    1. test_fibonacci.py
+       Status: SUCCESS
+       Tests Run: 5
+       Passed: 5
+       Failed: 0
+       Errors: 0
+       Time: 0.023s
+
+    2. test_calculator.py
+       Status: PARTIAL
+       Tests Run: 8
+       Passed: 7
+       Failed: 1
+       Error Details: test_divide_by_zero - AssertionError: Expected ValueError not raised
+
+    SUMMARY:
+    Total Files: 3
+    Total Tests: 17
+    Overall Pass Rate: 94.1%"
+  agent: test_executor
+  context:
+    - analyze_code_task
+    - design_test_strategy_task
+    - generate_test_code_task
+  output_file: test_execution_results.txt
+
+review_test_quality_task:
+  description: >
+    Review BOTH the generated test code AND execution results to provide comprehensive quality assessment:
+
+    1. Use FileReadTool to read test files from ./tests/ directory
+    2. Analyze the test execution results from the previous task
+    3. Verify test coverage completeness
+    4. Check test code quality and best practices
+    5. Analyze test failures and their root causes
+    6. Identify missing test scenarios based on:
+       - Original code analysis
+       - Test execution results
+       - Failed or missing edge cases
+    7. Validate assertions, mocks, and test data
+    8. Suggest improvements and optimizations
+
+    Provide actionable feedback for test enhancement based on BOTH code quality AND execution results.
+  expected_output: >
+    A comprehensive test quality review report containing:
+
+    1. EXECUTIVE SUMMARY:
+       - Overall test quality score
+       - Key findings and recommendations
+
+    2. TEST EXECUTION ANALYSIS:
+       - Review of test execution results
+       - Analysis of any failures or errors
+       - Root cause analysis for failed tests
+
+    3. TEST CODE REVIEW:
+       - List of test files reviewed
+       - Code quality assessment for each file
+       - Best practices compliance
+
+    4. COVERAGE ANALYSIS:
+       - Test coverage gaps identified
+       - Missing test scenarios
+       - Edge cases not covered
+
+    5. RECOMMENDATIONS:
+       - Specific improvements for each test file
+       - Suggestions for additional test cases
+       - Code quality improvements
+       - Performance optimizations
+
+    6. CONCLUSION:
+       - Final assessment of test suite quality
+       - Priority actions for improvement
+  agent: quality_reviewer
+  context:
+    - analyze_code_task
+    - design_test_strategy_task
+    - generate_test_code_task
+    - execute_tests_task
+  output_file: test_quality_report.md

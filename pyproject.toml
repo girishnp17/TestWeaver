@@ -1,0 +1,32 @@
+[project]
+name = "tester"
+version = "0.1.0"
+description = "Tester using crewAI"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "crewai[tools]>=0.201.1,<1.0.0",
+    "langchain-openai>=0.3.0",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.32.0",
+    "pydantic>=2.0.0",
+    "PyGithub>=2.5.0",
+    "redis>=5.0.0",
+    "celery>=5.4.0",
+    "httpx>=0.27.0",
+    "cryptography>=44.0.0"
+]
+
+[project.scripts]
+tester = "tester.main:run"
+run_crew = "tester.main:run"
+train = "tester.main:train"
+replay = "tester.main:replay"
+test = "tester.main:test"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "crew"
